@@ -7,7 +7,7 @@ app = FastAPI(title="PetGoggles API")
 # Configure CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],  # Vite default
+    allow_origins=["*"],  # Allow all origins for MVP stability
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

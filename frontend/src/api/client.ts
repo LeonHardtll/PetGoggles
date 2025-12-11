@@ -11,8 +11,17 @@ export async function processImage(file: File, mode: string): Promise<{ url: str
   })
 
   if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}))
-    throw new Error(errorData.detail || 'Processing failed')
+    let errorMessage = 'Processing failed';
+    try {
+      const errorData = await response.json();
+      console.error('Backend Error Details:', errorData);
+      errorMessage = errorData.detail || errorData.message || errorMessage;
+    } catch (e) {
+      const text = await response.text();
+      console.error('Backend Error Text:', text);
+      errorMessage = `Processing failed (${response.status}): ${text.substring(0, 100)}`;
+    }
+    throw new Error(errorMessage);
   }
 
   return response.json()

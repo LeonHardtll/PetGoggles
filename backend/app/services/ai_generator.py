@@ -35,19 +35,20 @@ class AIGenerator:
         else:
             prompt = base_prompt + "Cinematic lighting, realistic texture."
 
-        # Model: black-forest-labs/flux-schnell
-        model_id = "black-forest-labs/flux-schnell"
+        # Model: stability-ai/sdxl (Official Img2Img support)
+        # Version hash for consistency
+        model_version = "stability-ai/sdxl:39ed52f2a78e934b3ba6e2a89f5b1c712de7dfea535525255b1aa35c5565e08b"
         
         try:
-            # Replicate python client handles file-like objects in 'input'
+            # Replicate python client handles file-like objects in 'image'
             output = replicate.run(
-                model_id,
+                model_version,
                 input={
                     "prompt": prompt,
-                    "image": image_input, # Supports file path or file-like object
-                    "num_inference_steps": 4, 
-                    "guidance_scale": 3.5,
-                    "strength": 0.8
+                    "image": image_input, # SDXL accepts 'image' for img2img
+                    "prompt_strength": 0.6, # 0.0 to 1.0. Higher = more respect to prompt, less to original image.
+                    "num_inference_steps": 30,
+                    "guidance_scale": 7.5
                 }
             )
             
@@ -56,6 +57,6 @@ class AIGenerator:
             return str(output)
             
         except Exception as e:
-            # Fallback for dev/test without API Key
-            print(f"AI Generation failed (likely no API key): {e}")
-            return "https://via.placeholder.com/512?text=AI+Generated+Result"
+            # Propagate error to let the API handle it (and show 500 to user)
+            print(f"AI Generation Error: {str(e)}")
+            raise e
