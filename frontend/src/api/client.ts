@@ -1,4 +1,22 @@
-const API_BASE = 'http://localhost:8000/api'
+const API_BASE = '/api'
+
+export async function processImage(file: File, mode: string): Promise<{ url: string }> {
+  const formData = new FormData()
+  formData.append('file', file)
+  formData.append('mode', mode)
+
+  const response = await fetch(`${API_BASE}/images/process`, {
+    method: 'POST',
+    body: formData,
+  })
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}))
+    throw new Error(errorData.detail || 'Processing failed')
+  }
+
+  return response.json()
+}
 
 export async function uploadImage(file: File): Promise<{ id: string; filename: string }> {
   const formData = new FormData()

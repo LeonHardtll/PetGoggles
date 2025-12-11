@@ -6,10 +6,11 @@ class AIGenerator:
         # In a real app, ensure REPLICATE_API_TOKEN is set
         pass
 
-    def generate_pet_perspective(self, image_path: str, mode: str) -> str:
+    def generate_pet_perspective(self, image_input, mode: str) -> str:
         """
         Generates an image based on the pet mode.
         Returns the URL of the generated image.
+        image_input: Can be a file path (str) or a file-like object (bytes).
         """
         
         base_prompt = "A POV shot from a pet's perspective. "
@@ -37,28 +38,19 @@ class AIGenerator:
         # Model: black-forest-labs/flux-schnell
         model_id = "black-forest-labs/flux-schnell"
         
-        # In a real implementation, we would upload the local file to a URL or pass it as bytes
-        # For this MVP simulation, we assume Replicate can handle the flow or we use a public URL.
-        # But wait, Replicate python client accepts file handles!
-        
-        # Note: In a production environment, you should upload the image to S3 first 
-        # and pass the URL, because sending local file bytes can be slow/limited.
-        # However, Replicate Python client `input` allows file objects.
-        
         try:
-            with open(image_path, "rb") as image_file:
-                output = replicate.run(
-                    model_id,
-                    input={
-                        "prompt": prompt,
-                        "image": image_file, # Image-to-image input
-                        "num_inference_steps": 4, # Fast generation
-                        "guidance_scale": 3.5,
-                        "strength": 0.8 # How much to change the original image (0-1)
-                    }
-                )
+            # Replicate python client handles file-like objects in 'input'
+            output = replicate.run(
+                model_id,
+                input={
+                    "prompt": prompt,
+                    "image": image_input, # Supports file path or file-like object
+                    "num_inference_steps": 4, 
+                    "guidance_scale": 3.5,
+                    "strength": 0.8
+                }
+            )
             
-            # Output is usually a list of URLs or File objects depending on the model
             if isinstance(output, list) and len(output) > 0:
                 return str(output[0])
             return str(output)
@@ -66,5 +58,4 @@ class AIGenerator:
         except Exception as e:
             # Fallback for dev/test without API Key
             print(f"AI Generation failed (likely no API key): {e}")
-            # Return a placeholder image for demo purposes if API fails
             return "https://via.placeholder.com/512?text=AI+Generated+Result"

@@ -3,12 +3,13 @@ import { Dog, Cat, ArrowLeftRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface HeroComparisonProps {
-  realitySrc: string;
+  realitySrc: string; // Default/Dog reality
+  catRealitySrc: string; // Cat reality
   dogSrc: string;
   catSrc: string;
 }
 
-export const HeroComparison: React.FC<HeroComparisonProps> = ({ realitySrc, dogSrc, catSrc }) => {
+export const HeroComparison: React.FC<HeroComparisonProps> = ({ realitySrc, catRealitySrc, dogSrc, catSrc }) => {
   const [sliderPosition, setSliderPosition] = useState(50);
   const [activeMode, setActiveMode] = useState<'dog' | 'cat'>('dog');
   const [isHovering, setIsHovering] = useState(false);
@@ -101,12 +102,12 @@ export const HeroComparison: React.FC<HeroComparisonProps> = ({ realitySrc, dogS
       >
         {/* Layer 1: Reality (Right side visible primarily) */}
         <img 
-          src={realitySrc} 
+          src={activeMode === 'dog' ? realitySrc : catRealitySrc} 
           className="absolute inset-0 w-full h-full object-cover" 
           alt="Reality" 
         />
-        <div className="absolute top-4 right-4 bg-black/50 text-white text-xs font-bold px-2 py-1 rounded backdrop-blur-md">
-          HUMAN
+        <div className="absolute top-4 right-4 bg-black/50 text-white text-xs font-bold px-2 py-1 rounded backdrop-blur-md transition-all">
+          HUMAN ({activeMode === 'dog' ? 'DOG OWNER' : 'CAT SERVANT'})
         </div>
 
         {/* Layer 2: Pet Vision (Left side, clipped) */}

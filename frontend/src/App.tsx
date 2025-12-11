@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useAppStore } from './store/useAppStore'
-import { uploadImage, generateImage } from './api/client'
+import { processImage } from './api/client'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Upload, Sparkles, Loader2, Download, Lock } from 'lucide-react'
@@ -44,11 +44,8 @@ function App() {
     setError(null)
     
     try {
-      // 1. Upload
-      const { id } = await uploadImage(file)
-      
-      // 2. Generate
-      const { url } = await generateImage(id, mode)
+      // 1. Single Step: Upload & Process (Serverless Friendly)
+      const { url } = await processImage(file, mode)
       setResultImage(url)
     } catch (err) {
       setError("Failed to generate. Please try again.")
@@ -132,6 +129,7 @@ function App() {
               <div className="relative hidden lg:flex h-[600px] w-full items-center justify-center">
                  <HeroComparison 
                     realitySrc="/hero_image_reality.png" 
+                    catRealitySrc="/hero_image_reality_cat.png"
                     dogSrc="/hero_image_dogvision.png" 
                     catSrc="/hero_image_catvision.png" 
                  />

@@ -1,7 +1,7 @@
 import shutil
 import os
 import uuid
-from fastapi import APIRouter, UploadFile, File, HTTPException
+from fastapi import APIRouter, UploadFile, File, HTTPException, Form
 from app.services.ai_generator import AIGenerator
 
 router = APIRouter(
@@ -9,7 +9,7 @@ router = APIRouter(
     tags=["images"]
 )
 
-UPLOAD_DIR = "uploads"
+UPLOAD_DIR = "/tmp" # Use /tmp for serverless compatibility (Vercel)
 
 # Ensure upload directory exists
 if not os.path.exists(UPLOAD_DIR):
@@ -17,6 +17,25 @@ if not os.path.exists(UPLOAD_DIR):
 
 # Instantiate generator (stateless, so single instance is fine)
 ai_generator = AIGenerator()
+
+@router.post("/process")
+async def process_image(file: UploadFile = File(...), mode: str = Form(...)):
+    """
+    Combined endpoint for Serverless (Vercel) deployment.
+    Uploads and Generates in a single request to avoid filesystem persistence issues.
+    """
+    # 1. Validate file type
+    if file.content_type not in ["image/jpeg", "image/png", "image/webp"]:
+        raise HTTPException(status_code=400, detail="Invalid file type. Only JPEG, PNG, and WebP are allowed.")
+    
+    # 2. Call AI Service directly with the file object
+    try:
+        # Note: file.file is a SpooledTemporaryFile. Replicate client handles this.
+        # We pass it directly without saving to disk first.
+        result_url = ai_generator.generate_pet_perspective(file.file, mode)
+        return {"url": result_url}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/upload")
 async def upload_image(file: UploadFile = File(...)):
