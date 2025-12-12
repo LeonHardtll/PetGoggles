@@ -18,6 +18,12 @@ if not os.path.exists(UPLOAD_DIR):
 # Instantiate generator (stateless, so single instance is fine)
 ai_generator = AIGenerator()
 
+CONTENT_TYPE_TO_EXT = {
+    "image/jpeg": "jpg",
+    "image/png": "png",
+    "image/webp": "webp"
+}
+
 @router.post("/process")
 async def process_image(file: UploadFile = File(...), mode: str = Form(...)):
     """
@@ -40,12 +46,13 @@ async def process_image(file: UploadFile = File(...), mode: str = Form(...)):
 @router.post("/upload")
 async def upload_image(file: UploadFile = File(...)):
     # 1. Validate file type
-    if file.content_type not in ["image/jpeg", "image/png", "image/webp"]:
+    if file.content_type not in CONTENT_TYPE_TO_EXT:
         raise HTTPException(status_code=400, detail="Invalid file type. Only JPEG, PNG, and WebP are allowed.")
     
     # 2. Generate unique ID
     file_id = str(uuid.uuid4())
-    extension = file.filename.split(".")[-1] if "." in file.filename else "jpg"
+    # Use canonical extension based on content type to ensure consistency
+    extension = CONTENT_TYPE_TO_EXT[file.content_type]
     filename = f"{file_id}.{extension}"
     file_path = os.path.join(UPLOAD_DIR, filename)
     
@@ -61,16 +68,12 @@ async def upload_image(file: UploadFile = File(...)):
 @router.post("/generate/{image_id}")
 async def generate_image(image_id: str, mode: str):
     # 1. Find the file
-    # We need to find the extension. Since we didn't store metadata in DB (MVP shortcut),
-    # we have to check for possible extensions or store extension in ID?
-    # Better MVP hack: The client knows the filename from upload response, 
-    # but the API spec says `image_id`. 
-    # Let's search the directory for `image_id.*`
-    
+    # Check for possible extensions directly instead of iterating the directory
     found_file = None
-    for file in os.listdir(UPLOAD_DIR):
-        if file.startswith(image_id):
-            found_file = os.path.join(UPLOAD_DIR, file)
+    for ext in CONTENT_TYPE_TO_EXT.values():
+        possible_path = os.path.join(UPLOAD_DIR, f"{image_id}.{ext}")
+        if os.path.exists(possible_path):
+            found_file = possible_path
             break
             
     if not found_file:
