@@ -15,21 +15,37 @@ export const HeroComparison: React.FC<HeroComparisonProps> = ({ realitySrc, catR
   const [isHovering, setIsHovering] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
+  // Optimization: use requestAnimationFrame to throttle slider updates
+  const requestRef = useRef<number>();
+
   const handleMouseMove = useCallback((e: React.MouseEvent | React.TouchEvent) => {
     if (!containerRef.current) return;
 
-    const rect = containerRef.current.getBoundingClientRect();
-    let clientX;
+    // Capture the clientX synchronously from the event
+    const clientX = 'touches' in e ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
     
-    if ('touches' in e) {
-      clientX = e.touches[0].clientX;
-    } else {
-      clientX = (e as React.MouseEvent).clientX;
+    // Cancel any pending frame to avoid stacking updates
+    if (requestRef.current) {
+      cancelAnimationFrame(requestRef.current);
     }
 
-    const x = Math.max(0, Math.min(clientX - rect.left, rect.width));
-    const percentage = (x / rect.width) * 100;
-    setSliderPosition(percentage);
+    // Schedule the update on the next animation frame
+    requestRef.current = requestAnimationFrame(() => {
+      if (!containerRef.current) return;
+      const rect = containerRef.current.getBoundingClientRect();
+      const x = Math.max(0, Math.min(clientX - rect.left, rect.width));
+      const percentage = (x / rect.width) * 100;
+      setSliderPosition(percentage);
+    });
+  }, []);
+
+  // Cleanup pending animation frame on unmount
+  useEffect(() => {
+    return () => {
+      if (requestRef.current) {
+        cancelAnimationFrame(requestRef.current);
+      }
+    };
   }, []);
 
   const [containerWidth, setContainerWidth] = useState(0);
@@ -42,6 +58,9 @@ export const HeroComparison: React.FC<HeroComparisonProps> = ({ realitySrc, catR
     };
     
     updateWidth();
+    // Optimization: Debouncing resize is often good, but native resize events are high frequency.
+    // Since we only update state which triggers a re-render, it's okay for now.
+    // Prioritizing the slider interaction optimization.
     window.addEventListener('resize', updateWidth);
     return () => window.removeEventListener('resize', updateWidth);
   }, []);
@@ -119,60 +138,9 @@ export const HeroComparison: React.FC<HeroComparisonProps> = ({ realitySrc, catR
             src={activeMode === 'dog' ? dogSrc : catSrc} 
             className={cn(
                 "absolute inset-0 w-full h-full max-w-none object-cover h-full", 
-                // Fix for aspect ratio matching - we need the image to be exactly the same size/position as the underlying one.
-                // Assuming all images are same aspect ratio. 
-                // Since we use max-w-none and container width, we need to ensure it matches the container's full width.
-                // Actually 'w-full' inside 'absolute inset-0' refers to the PARENT (the clipped div).
-                // We need the image to be the width of the GRANDPARENT (container).
             )}
-            style={{ width: containerRef.current?.offsetWidth || '100%' }} // Dynamic fix or just 100% of container?
-            // Correction: The image inside the clipped div must be the full width of the CONTAINER, not the clipped div.
-            // So we use width: 100% of the viewport (container) width.
-            // But standard CSS 'w-full' is 100% of parent.
-            // We need to use vw or calc? No.
-            // We can just set the image width to the container width.
-            // Let's use a style prop for width if possible, or just standard "100%" and ensure parent is the container.
-            // Wait, if I put the image in a clipped div, and say w-full, it will be squished.
-            // Correct approach:
+            style={{ width: containerRef.current?.offsetWidth || '100%' }}
           />
-        </div>
-        
-        {/* Re-implementing the Image logic to be safer without JS width calculation for the inner image */}
-        <div 
-            className="absolute top-0 left-0 h-full overflow-hidden border-r-4 border-white/80 shadow-[20px_0_50px_rgba(0,0,0,0.5)]"
-            style={{ width: `${sliderPosition}%` }}
-        >
-             <img 
-                src={activeMode === 'dog' ? dogSrc : catSrc} 
-                className="absolute top-0 left-0 max-w-none h-full object-cover"
-                style={{ 
-                    width: containerRef.current?.offsetWidth ? `${containerRef.current.offsetWidth}px` : '100%' 
-                }}
-                // Fallback: If ref is null (initial render), this might look weird. 
-                // Better approach: use 'vw' or fixed size? 
-                // Or just use a very wide width? 
-                // Actually, standard solution:
-                // Inner image width = 100% of container.
-                // Set width to the container's width.
-                // Let's rely on the JS width set above, or default to 100% and hope it matches.
-                // Actually, standard trick: 'w-[500px]' (max width of container) if we know it.
-                // Let's just use '100%' and a transformer? 
-                // No, simpler: 
-             />
-             {/* Better way:
-                The image should be: width: 100% (of container) height: 100%.
-                The parent div clips it. 
-                If parent div is 50%, image is 50%.
-                So image needs to be 200%? No.
-                The image inside the clipped div needs to be positioned absolutely and sized to the full container.
-             */}
-             <div className="w-full h-full relative">
-                 {/* This wrapper is the clipped window. */}
-                 {/* The image inside needs to be translated opposite to the clip? No. */}
-                 {/* Simplest: The image is just fixed size matching the container. */}
-                 {/* Let's try `width: '100vw'`? No. */}
-                 {/* Let's trust the `containerRef.current.offsetWidth` trick, but add a resize listener. */}
-             </div>
         </div>
         
          {/* Retry Image structure for robustness */}
