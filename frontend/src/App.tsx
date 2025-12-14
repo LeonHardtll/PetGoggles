@@ -109,9 +109,11 @@ function App() {
                       variant="outline" 
                       size="lg" 
                       className="text-lg px-8 py-6 rounded-full border-2 hover:bg-slate-50"
-                      onClick={() => window.open('https://github.com', '_blank')}
+                      asChild
                     >
-                      View Gallery
+                      <a href="https://github.com" target="_blank" rel="noopener noreferrer">
+                        View Gallery
+                      </a>
                     </Button>
                  </div>
                  
@@ -164,15 +166,24 @@ function App() {
           <div id="mode-selection" className={cn("grid grid-cols-1 md:grid-cols-2 gap-6 mb-12 max-w-4xl mx-auto scroll-mt-24", !mode ? "mt-12" : "")}>
             <Card 
               className={cn(
-                "cursor-pointer transition-all duration-300 hover:shadow-xl border-2 hover:-translate-y-1 overflow-hidden",
+                "cursor-pointer transition-all duration-300 hover:shadow-xl border-2 hover:-translate-y-1 overflow-hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500",
                 mode === 'dog' ? "border-indigo-500 bg-indigo-50" : "border-slate-100 hover:border-orange-200"
               )}
               onClick={() => handleModeSelect('dog')}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  handleModeSelect('dog');
+                }
+              }}
+              role="button"
+              tabIndex={0}
+              aria-label="Select Dog Mode: Adoration filter"
             >
               <CardContent className="flex flex-col items-center p-8">
                 <div className="bg-orange-100/50 p-6 rounded-full mb-6 relative group">
                   <div className="absolute inset-0 bg-orange-200 rounded-full blur-xl opacity-0 group-hover:opacity-50 transition-opacity" />
-                  <img src="/mode_dog.png" className="w-24 h-24 object-contain relative z-10 transform group-hover:scale-110 transition-transform" />
+                  <img src="/mode_dog.png" className="w-24 h-24 object-contain relative z-10 transform group-hover:scale-110 transition-transform" alt="" />
                 </div>
                 <h3 className="text-2xl font-bold text-slate-900">Dog Mode</h3>
                 <p className="text-slate-500 text-center mt-3">
@@ -183,15 +194,24 @@ function App() {
 
             <Card 
               className={cn(
-                "cursor-pointer transition-all duration-300 hover:shadow-xl border-2 hover:-translate-y-1 overflow-hidden",
+                "cursor-pointer transition-all duration-300 hover:shadow-xl border-2 hover:-translate-y-1 overflow-hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500",
                 mode === 'cat' ? "border-indigo-500 bg-indigo-50" : "border-slate-100 hover:border-purple-200"
               )}
               onClick={() => handleModeSelect('cat')}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  handleModeSelect('cat');
+                }
+              }}
+              role="button"
+              tabIndex={0}
+              aria-label="Select Cat Mode: Judgmental filter"
             >
               <CardContent className="flex flex-col items-center p-8">
                 <div className="bg-purple-100/50 p-6 rounded-full mb-6 relative group">
                   <div className="absolute inset-0 bg-purple-200 rounded-full blur-xl opacity-0 group-hover:opacity-50 transition-opacity" />
-                  <img src="/mode_cat.png" className="w-24 h-24 object-contain relative z-10 transform group-hover:scale-110 transition-transform" />
+                  <img src="/mode_cat.png" className="w-24 h-24 object-contain relative z-10 transform group-hover:scale-110 transition-transform" alt="" />
                 </div>
                 <h3 className="text-2xl font-bold text-slate-900">Cat Mode</h3>
                 <p className="text-slate-500 text-center mt-3">
