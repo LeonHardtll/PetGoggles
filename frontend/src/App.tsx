@@ -38,6 +38,13 @@ function App() {
       }, 100)
   }
 
+  const handleKeyDown = (e: React.KeyboardEvent, selectedMode: 'dog' | 'cat') => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault()
+      handleModeSelect(selectedMode)
+    }
+  }
+
   const handleGenerate = async (file: File) => {
     if (!mode) return
     setIsProcessing(true)
@@ -163,8 +170,12 @@ function App() {
         {!originalImage && (
           <div id="mode-selection" className={cn("grid grid-cols-1 md:grid-cols-2 gap-6 mb-12 max-w-4xl mx-auto scroll-mt-24", !mode ? "mt-12" : "")}>
             <Card 
+              role="button"
+              tabIndex={0}
+              aria-pressed={mode === 'dog'}
+              onKeyDown={(e) => handleKeyDown(e, 'dog')}
               className={cn(
-                "cursor-pointer transition-all duration-300 hover:shadow-xl border-2 hover:-translate-y-1 overflow-hidden",
+                "cursor-pointer transition-all duration-300 hover:shadow-xl border-2 hover:-translate-y-1 overflow-hidden focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-indigo-500 focus-visible:outline-none",
                 mode === 'dog' ? "border-indigo-500 bg-indigo-50" : "border-slate-100 hover:border-orange-200"
               )}
               onClick={() => handleModeSelect('dog')}
@@ -182,8 +193,12 @@ function App() {
             </Card>
 
             <Card 
+              role="button"
+              tabIndex={0}
+              aria-pressed={mode === 'cat'}
+              onKeyDown={(e) => handleKeyDown(e, 'cat')}
               className={cn(
-                "cursor-pointer transition-all duration-300 hover:shadow-xl border-2 hover:-translate-y-1 overflow-hidden",
+                "cursor-pointer transition-all duration-300 hover:shadow-xl border-2 hover:-translate-y-1 overflow-hidden focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-indigo-500 focus-visible:outline-none",
                 mode === 'cat' ? "border-indigo-500 bg-indigo-50" : "border-slate-100 hover:border-purple-200"
               )}
               onClick={() => handleModeSelect('cat')}
