@@ -1,0 +1,3 @@
+## 2024-05-23 - React State vs. Ref for Animations
+**Learning:** High-frequency animations (like drag sliders or continuous loops) cause significant performance degradation when driven by React state (`useState`), as they trigger full component re-renders on every frame.
+**Action:** Use `useRef` to store mutable values (like position) and directly manipulate the DOM (e.g., `ref.current.style.width`) inside event handlers or `requestAnimationFrame` loops. This bypasses the React render cycle entirely for the visual update, reserving React state only for logic that affects the component tree structure or prop changes.
