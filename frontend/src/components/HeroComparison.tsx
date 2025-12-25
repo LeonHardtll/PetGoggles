@@ -10,10 +10,18 @@ interface HeroComparisonProps {
 }
 
 export const HeroComparison: React.FC<HeroComparisonProps> = ({ realitySrc, catRealitySrc, dogSrc, catSrc }) => {
-  const [sliderPosition, setSliderPosition] = useState(50);
+  // Removed sliderPosition state for performance (direct DOM manipulation)
+  const sliderPosRef = useRef(50);
   const [activeMode, setActiveMode] = useState<'dog' | 'cat'>('dog');
   const [isHovering, setIsHovering] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  const updateSliderPos = useCallback((percentage: number) => {
+    sliderPosRef.current = percentage;
+    if (containerRef.current) {
+      containerRef.current.style.setProperty('--slider-pos', `${percentage}%`);
+    }
+  }, []);
 
   const handleMouseMove = useCallback((e: React.MouseEvent | React.TouchEvent) => {
     if (!containerRef.current) return;
@@ -29,8 +37,8 @@ export const HeroComparison: React.FC<HeroComparisonProps> = ({ realitySrc, catR
 
     const x = Math.max(0, Math.min(clientX - rect.left, rect.width));
     const percentage = (x / rect.width) * 100;
-    setSliderPosition(percentage);
-  }, []);
+    updateSliderPos(percentage);
+  }, [updateSliderPos]);
 
   const [containerWidth, setContainerWidth] = useState(0);
 
@@ -50,18 +58,38 @@ export const HeroComparison: React.FC<HeroComparisonProps> = ({ realitySrc, catR
   useEffect(() => {
     if (isHovering) return;
     
+    let animationFrameId: number;
     let direction = 1;
-    const interval = setInterval(() => {
-      setSliderPosition(prev => {
-        const next = prev + (0.5 * direction);
-        if (next > 70) direction = -1;
-        if (next < 30) direction = 1;
-        return next;
-      });
-    }, 50);
+    let lastTime = performance.now();
 
-    return () => clearInterval(interval);
-  }, [isHovering]);
+    const animate = (time: number) => {
+      const delta = time - lastTime;
+      // Cap delta to prevent huge jumps if tab was inactive
+      const cappedDelta = Math.min(delta, 100);
+      lastTime = time;
+
+      // Move 10% per second (same as original 0.5% per 50ms)
+      const moveAmount = 10 * (cappedDelta / 1000);
+
+      let next = sliderPosRef.current + (moveAmount * direction);
+
+      if (next > 70) {
+        next = 70;
+        direction = -1;
+      }
+      if (next < 30) {
+        next = 30;
+        direction = 1;
+      }
+
+      updateSliderPos(next);
+      animationFrameId = requestAnimationFrame(animate);
+    };
+
+    animationFrameId = requestAnimationFrame(animate);
+
+    return () => cancelAnimationFrame(animationFrameId);
+  }, [isHovering, updateSliderPos]);
 
   return (
     <div className="relative w-full max-w-[500px] mx-auto lg:mx-0 select-none group">
@@ -95,6 +123,7 @@ export const HeroComparison: React.FC<HeroComparisonProps> = ({ realitySrc, catR
       <div 
         ref={containerRef}
         className="relative w-full aspect-[3/4] rounded-3xl overflow-hidden shadow-2xl border-8 border-white bg-slate-100 cursor-col-resize"
+        style={{ '--slider-pos': '50%' } as React.CSSProperties}
         onMouseMove={handleMouseMove}
         onTouchMove={handleMouseMove}
         onMouseEnter={() => setIsHovering(true)}
@@ -113,7 +142,7 @@ export const HeroComparison: React.FC<HeroComparisonProps> = ({ realitySrc, catR
         {/* Layer 2: Pet Vision (Left side, clipped) */}
         <div 
           className="absolute inset-0 overflow-hidden"
-          style={{ width: `${sliderPosition}%` }}
+          style={{ width: 'var(--slider-pos)' }}
         >
           <img 
             src={activeMode === 'dog' ? dogSrc : catSrc} 
@@ -140,7 +169,7 @@ export const HeroComparison: React.FC<HeroComparisonProps> = ({ realitySrc, catR
         {/* Re-implementing the Image logic to be safer without JS width calculation for the inner image */}
         <div 
             className="absolute top-0 left-0 h-full overflow-hidden border-r-4 border-white/80 shadow-[20px_0_50px_rgba(0,0,0,0.5)]"
-            style={{ width: `${sliderPosition}%` }}
+            style={{ width: 'var(--slider-pos)' }}
         >
              <img 
                 src={activeMode === 'dog' ? dogSrc : catSrc} 
@@ -178,7 +207,7 @@ export const HeroComparison: React.FC<HeroComparisonProps> = ({ realitySrc, catR
          {/* Retry Image structure for robustness */}
          <div 
             className="absolute top-0 left-0 h-full overflow-hidden border-r-2 border-white/50 shadow-xl z-10"
-            style={{ width: `${sliderPosition}%` }}
+            style={{ width: 'var(--slider-pos)' }}
         >
              <img 
                 src={activeMode === 'dog' ? dogSrc : catSrc} 
@@ -200,7 +229,7 @@ export const HeroComparison: React.FC<HeroComparisonProps> = ({ realitySrc, catR
         {/* Slider Handle */}
         <div 
             className="absolute top-0 bottom-0 w-1 bg-white cursor-col-resize z-20 shadow-[0_0_10px_rgba(0,0,0,0.3)]"
-            style={{ left: `${sliderPosition}%` }}
+            style={{ left: 'var(--slider-pos)' }}
         >
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-lg transform active:scale-95 transition-transform">
                 <ArrowLeftRight className="w-4 h-4 text-slate-400" />
