@@ -19,7 +19,7 @@ interface AppState {
   reset: () => void
 }
 
-export const useAppStore = create<AppState>((set) => ({
+export const useAppStore = create<AppState>((set, get) => ({
   mode: null,
   originalImage: null,
   originalImageUrl: null,
@@ -29,6 +29,11 @@ export const useAppStore = create<AppState>((set) => ({
 
   setMode: (mode) => set({ mode }),
   setOriginalImage: (file) => {
+    // Revoke previous URL if it exists to prevent memory leaks
+    const currentUrl = get().originalImageUrl
+    if (currentUrl) {
+      URL.revokeObjectURL(currentUrl)
+    }
     // Create a local preview URL immediately
     const url = URL.createObjectURL(file)
     set({ originalImage: file, originalImageUrl: url, error: null })
@@ -36,12 +41,18 @@ export const useAppStore = create<AppState>((set) => ({
   setResultImage: (url) => set({ resultImageUrl: url }),
   setIsProcessing: (isProcessing) => set({ isProcessing }),
   setError: (error) => set({ error }),
-  reset: () => set({ 
-    mode: null, 
-    originalImage: null, 
-    originalImageUrl: null, 
-    resultImageUrl: null, 
-    isProcessing: false, 
-    error: null 
-  }),
+  reset: () => {
+    const currentUrl = get().originalImageUrl
+    if (currentUrl) {
+      URL.revokeObjectURL(currentUrl)
+    }
+    set({
+      mode: null,
+      originalImage: null,
+      originalImageUrl: null,
+      resultImageUrl: null,
+      isProcessing: false,
+      error: null
+    })
+  },
 }))
