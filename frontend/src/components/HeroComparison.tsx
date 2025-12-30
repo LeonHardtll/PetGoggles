@@ -51,16 +51,37 @@ export const HeroComparison: React.FC<HeroComparisonProps> = ({ realitySrc, catR
     if (isHovering) return;
     
     let direction = 1;
-    const interval = setInterval(() => {
+    let lastTime = performance.now();
+    let animationId: number;
+
+    const animate = (time: number) => {
+      const delta = time - lastTime;
+      // Cap delta to prevent huge jumps if tab was inactive
+      const effectiveDelta = Math.min(delta, 100);
+      lastTime = time;
+
+      // Original speed: 0.5% per 50ms = 0.01% per ms
+      const speed = 0.01;
+      const move = speed * effectiveDelta;
+
       setSliderPosition(prev => {
-        const next = prev + (0.5 * direction);
-        if (next > 70) direction = -1;
-        if (next < 30) direction = 1;
+        let next = prev + (move * direction);
+        if (next > 70) {
+          next = 70;
+          direction = -1;
+        } else if (next < 30) {
+          next = 30;
+          direction = 1;
+        }
         return next;
       });
-    }, 50);
 
-    return () => clearInterval(interval);
+      animationId = requestAnimationFrame(animate);
+    };
+
+    animationId = requestAnimationFrame(animate);
+
+    return () => cancelAnimationFrame(animationId);
   }, [isHovering]);
 
   return (
