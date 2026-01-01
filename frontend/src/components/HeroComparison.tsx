@@ -13,6 +13,7 @@ export const HeroComparison: React.FC<HeroComparisonProps> = ({ realitySrc, catR
   const [sliderPosition, setSliderPosition] = useState(50);
   const [activeMode, setActiveMode] = useState<'dog' | 'cat'>('dog');
   const [isHovering, setIsHovering] = useState(false);
+  const [isFocused, setIsFocused] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
   const handleMouseMove = useCallback((e: React.MouseEvent | React.TouchEvent) => {
@@ -46,9 +47,19 @@ export const HeroComparison: React.FC<HeroComparisonProps> = ({ realitySrc, catR
     return () => window.removeEventListener('resize', updateWidth);
   }, []);
 
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'ArrowLeft') {
+      setSliderPosition(prev => Math.max(0, prev - 5));
+      e.preventDefault();
+    } else if (e.key === 'ArrowRight') {
+      setSliderPosition(prev => Math.min(100, prev + 5));
+      e.preventDefault();
+    }
+  };
+
   // Auto-sweep animation when not hovering
   useEffect(() => {
-    if (isHovering) return;
+    if (isHovering || isFocused) return;
     
     let direction = 1;
     const interval = setInterval(() => {
@@ -61,7 +72,7 @@ export const HeroComparison: React.FC<HeroComparisonProps> = ({ realitySrc, catR
     }, 50);
 
     return () => clearInterval(interval);
-  }, [isHovering]);
+  }, [isHovering, isFocused]);
 
   return (
     <div className="relative w-full max-w-[500px] mx-auto lg:mx-0 select-none group">
@@ -202,7 +213,18 @@ export const HeroComparison: React.FC<HeroComparisonProps> = ({ realitySrc, catR
             className="absolute top-0 bottom-0 w-1 bg-white cursor-col-resize z-20 shadow-[0_0_10px_rgba(0,0,0,0.3)]"
             style={{ left: `${sliderPosition}%` }}
         >
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-lg transform active:scale-95 transition-transform">
+            <div
+                role="slider"
+                tabIndex={0}
+                aria-label="Comparison slider"
+                aria-valuenow={Math.round(sliderPosition)}
+                aria-valuemin={0}
+                aria-valuemax={100}
+                onKeyDown={handleKeyDown}
+                onFocus={() => setIsFocused(true)}
+                onBlur={() => setIsFocused(false)}
+                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-lg transform active:scale-95 transition-transform focus-visible:ring-4 focus-visible:ring-indigo-400 focus-visible:outline-none"
+            >
                 <ArrowLeftRight className="w-4 h-4 text-slate-400" />
             </div>
         </div>
