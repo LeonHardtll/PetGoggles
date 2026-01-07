@@ -73,15 +73,15 @@ export function Testimonials() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto px-4">
         <Card className="bg-orange-50 border-orange-100">
           <CardContent className="p-6">
-            <div className="flex items-center gap-1 mb-4 text-orange-400">
-              <Star className="fill-current w-4 h-4" /><Star className="fill-current w-4 h-4" /><Star className="fill-current w-4 h-4" /><Star className="fill-current w-4 h-4" /><Star className="fill-current w-4 h-4" />
+            <div className="flex items-center gap-1 mb-4 text-orange-400" role="img" aria-label="5 out of 5 stars">
+              <Star className="fill-current w-4 h-4" aria-hidden="true" /><Star className="fill-current w-4 h-4" aria-hidden="true" /><Star className="fill-current w-4 h-4" aria-hidden="true" /><Star className="fill-current w-4 h-4" aria-hidden="true" /><Star className="fill-current w-4 h-4" aria-hidden="true" />
             </div>
-            <Quote className="w-8 h-8 text-orange-200 mb-2" />
+            <Quote className="w-8 h-8 text-orange-200 mb-2" aria-hidden="true" />
             <p className="text-slate-700 font-medium italic mb-4">
               "Finally, an app that captures my human's true radiance! I knew they were made of sunshine and bacon!"
             </p>
             <div className="flex items-center gap-3">
-              <img src="https://images.unsplash.com/photo-1552053831-71594a27632d?auto=format&fit=crop&q=80&w=100" className="w-10 h-10 rounded-full object-cover border-2 border-white shadow-sm" />
+              <img src="https://images.unsplash.com/photo-1552053831-71594a27632d?auto=format&fit=crop&q=80&w=100" alt="Rex" className="w-10 h-10 rounded-full object-cover border-2 border-white shadow-sm" />
               <div>
                 <p className="text-sm font-bold text-slate-900">Rex</p>
                 <p className="text-xs text-slate-500">Golden Retriever • Good Boy</p>
@@ -92,15 +92,15 @@ export function Testimonials() {
 
         <Card className="bg-purple-50 border-purple-100">
           <CardContent className="p-6">
-            <div className="flex items-center gap-1 mb-4 text-purple-400">
-              <Star className="fill-current w-4 h-4" /><Star className="fill-current w-4 h-4" />
+            <div className="flex items-center gap-1 mb-4 text-purple-400" role="img" aria-label="2 out of 5 stars">
+              <Star className="fill-current w-4 h-4" aria-hidden="true" /><Star className="fill-current w-4 h-4" aria-hidden="true" />
             </div>
-            <Quote className="w-8 h-8 text-purple-200 mb-2" />
+            <Quote className="w-8 h-8 text-purple-200 mb-2" aria-hidden="true" />
             <p className="text-slate-700 font-medium italic mb-4">
               "Accurate representation of the biped's awkwardness. The filter exposes their true lack of grace. 2 stars because I was fed late."
             </p>
             <div className="flex items-center gap-3">
-              <img src="https://images.unsplash.com/photo-1513245543132-31f507417b26?auto=format&fit=crop&q=80&w=100" className="w-10 h-10 rounded-full object-cover border-2 border-white shadow-sm" />
+              <img src="https://images.unsplash.com/photo-1513245543132-31f507417b26?auto=format&fit=crop&q=80&w=100" alt="Luna" className="w-10 h-10 rounded-full object-cover border-2 border-white shadow-sm" />
               <div>
                 <p className="text-sm font-bold text-slate-900">Luna</p>
                 <p className="text-xs text-slate-500">Void Cat • The Boss</p>
