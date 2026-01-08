@@ -13,7 +13,24 @@ export const HeroComparison: React.FC<HeroComparisonProps> = ({ realitySrc, catR
   const [sliderPosition, setSliderPosition] = useState(50);
   const [activeMode, setActiveMode] = useState<'dog' | 'cat'>('dog');
   const [isHovering, setIsHovering] = useState(false);
+  const [isFocused, setIsFocused] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'ArrowLeft') {
+      e.preventDefault();
+      setSliderPosition(prev => Math.max(0, prev - 5));
+    } else if (e.key === 'ArrowRight') {
+      e.preventDefault();
+      setSliderPosition(prev => Math.min(100, prev + 5));
+    } else if (e.key === 'Home') {
+      e.preventDefault();
+      setSliderPosition(0);
+    } else if (e.key === 'End') {
+      e.preventDefault();
+      setSliderPosition(100);
+    }
+  };
 
   const handleMouseMove = useCallback((e: React.MouseEvent | React.TouchEvent) => {
     if (!containerRef.current) return;
@@ -46,9 +63,9 @@ export const HeroComparison: React.FC<HeroComparisonProps> = ({ realitySrc, catR
     return () => window.removeEventListener('resize', updateWidth);
   }, []);
 
-  // Auto-sweep animation when not hovering
+  // Auto-sweep animation when not hovering or focused
   useEffect(() => {
-    if (isHovering) return;
+    if (isHovering || isFocused) return;
     
     let direction = 1;
     const interval = setInterval(() => {
@@ -61,7 +78,7 @@ export const HeroComparison: React.FC<HeroComparisonProps> = ({ realitySrc, catR
     }, 50);
 
     return () => clearInterval(interval);
-  }, [isHovering]);
+  }, [isHovering, isFocused]);
 
   return (
     <div className="relative w-full max-w-[500px] mx-auto lg:mx-0 select-none group">
@@ -94,11 +111,20 @@ export const HeroComparison: React.FC<HeroComparisonProps> = ({ realitySrc, catR
       {/* Main Container */}
       <div 
         ref={containerRef}
-        className="relative w-full aspect-[3/4] rounded-3xl overflow-hidden shadow-2xl border-8 border-white bg-slate-100 cursor-col-resize"
+        className="relative w-full aspect-[3/4] rounded-3xl overflow-hidden shadow-2xl border-8 border-white bg-slate-100 cursor-col-resize focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-500/50"
         onMouseMove={handleMouseMove}
         onTouchMove={handleMouseMove}
         onMouseEnter={() => setIsHovering(true)}
         onMouseLeave={() => setIsHovering(false)}
+        role="slider"
+        tabIndex={0}
+        aria-label="Comparison slider"
+        aria-valuenow={Math.round(sliderPosition)}
+        aria-valuemin={0}
+        aria-valuemax={100}
+        onKeyDown={handleKeyDown}
+        onFocus={() => setIsFocused(true)}
+        onBlur={() => setIsFocused(false)}
       >
         {/* Layer 1: Reality (Right side visible primarily) */}
         <img 
