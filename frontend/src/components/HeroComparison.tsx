@@ -15,6 +15,22 @@ export const HeroComparison: React.FC<HeroComparisonProps> = ({ realitySrc, catR
   const [isHovering, setIsHovering] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (e.key === 'ArrowLeft') {
+      e.preventDefault();
+      setSliderPosition(prev => Math.max(0, prev - 5));
+    } else if (e.key === 'ArrowRight') {
+      e.preventDefault();
+      setSliderPosition(prev => Math.min(100, prev + 5));
+    } else if (e.key === 'Home') {
+      e.preventDefault();
+      setSliderPosition(0);
+    } else if (e.key === 'End') {
+      e.preventDefault();
+      setSliderPosition(100);
+    }
+  }, []);
+
   const handleMouseMove = useCallback((e: React.MouseEvent | React.TouchEvent) => {
     if (!containerRef.current) return;
 
@@ -199,10 +215,19 @@ export const HeroComparison: React.FC<HeroComparisonProps> = ({ realitySrc, catR
 
         {/* Slider Handle */}
         <div 
-            className="absolute top-0 bottom-0 w-1 bg-white cursor-col-resize z-20 shadow-[0_0_10px_rgba(0,0,0,0.3)]"
+            className="absolute top-0 bottom-0 w-1 bg-white cursor-col-resize z-20 shadow-[0_0_10px_rgba(0,0,0,0.3)] outline-none group"
             style={{ left: `${sliderPosition}%` }}
+            role="slider"
+            tabIndex={0}
+            aria-label="Comparison slider"
+            aria-valuenow={sliderPosition}
+            aria-valuemin={0}
+            aria-valuemax={100}
+            onKeyDown={handleKeyDown}
+            onFocus={() => setIsHovering(true)}
+            onBlur={() => setIsHovering(false)}
         >
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-lg transform active:scale-95 transition-transform">
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-lg transform active:scale-95 transition-transform group-focus:ring-2 group-focus:ring-blue-500 ring-offset-2">
                 <ArrowLeftRight className="w-4 h-4 text-slate-400" />
             </div>
         </div>
