@@ -15,6 +15,22 @@ export const HeroComparison: React.FC<HeroComparisonProps> = ({ realitySrc, catR
   const [isHovering, setIsHovering] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (e.key === 'ArrowLeft') {
+      e.preventDefault();
+      setSliderPosition(prev => Math.max(0, prev - 5));
+    } else if (e.key === 'ArrowRight') {
+      e.preventDefault();
+      setSliderPosition(prev => Math.min(100, prev + 5));
+    } else if (e.key === 'Home') {
+      e.preventDefault();
+      setSliderPosition(0);
+    } else if (e.key === 'End') {
+      e.preventDefault();
+      setSliderPosition(100);
+    }
+  }, []);
+
   const handleMouseMove = useCallback((e: React.MouseEvent | React.TouchEvent) => {
     if (!containerRef.current) return;
 
@@ -94,11 +110,20 @@ export const HeroComparison: React.FC<HeroComparisonProps> = ({ realitySrc, catR
       {/* Main Container */}
       <div 
         ref={containerRef}
-        className="relative w-full aspect-[3/4] rounded-3xl overflow-hidden shadow-2xl border-8 border-white bg-slate-100 cursor-col-resize"
+        role="slider"
+        tabIndex={0}
+        aria-label={`Compare ${activeMode} vision vs reality`}
+        aria-valuenow={Math.round(sliderPosition)}
+        aria-valuemin={0}
+        aria-valuemax={100}
+        className="relative w-full aspect-[3/4] rounded-3xl overflow-hidden shadow-2xl border-8 border-white bg-slate-100 cursor-col-resize focus-visible:ring-4 focus-visible:ring-offset-4 focus-visible:ring-indigo-500 outline-none"
         onMouseMove={handleMouseMove}
         onTouchMove={handleMouseMove}
+        onKeyDown={handleKeyDown}
         onMouseEnter={() => setIsHovering(true)}
         onMouseLeave={() => setIsHovering(false)}
+        onFocus={() => setIsHovering(true)}
+        onBlur={() => setIsHovering(false)}
       >
         {/* Layer 1: Reality (Right side visible primarily) */}
         <img 
