@@ -163,8 +163,17 @@ function App() {
         {!originalImage && (
           <div id="mode-selection" className={cn("grid grid-cols-1 md:grid-cols-2 gap-6 mb-12 max-w-4xl mx-auto scroll-mt-24", !mode ? "mt-12" : "")}>
             <Card 
+              role="button"
+              tabIndex={0}
+              aria-pressed={mode === 'dog'}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault()
+                  handleModeSelect('dog')
+                }
+              }}
               className={cn(
-                "cursor-pointer transition-all duration-300 hover:shadow-xl border-2 hover:-translate-y-1 overflow-hidden",
+                "cursor-pointer transition-all duration-300 hover:shadow-xl border-2 hover:-translate-y-1 overflow-hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2",
                 mode === 'dog' ? "border-indigo-500 bg-indigo-50" : "border-slate-100 hover:border-orange-200"
               )}
               onClick={() => handleModeSelect('dog')}
@@ -182,8 +191,17 @@ function App() {
             </Card>
 
             <Card 
+              role="button"
+              tabIndex={0}
+              aria-pressed={mode === 'cat'}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault()
+                  handleModeSelect('cat')
+                }
+              }}
               className={cn(
-                "cursor-pointer transition-all duration-300 hover:shadow-xl border-2 hover:-translate-y-1 overflow-hidden",
+                "cursor-pointer transition-all duration-300 hover:shadow-xl border-2 hover:-translate-y-1 overflow-hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2",
                 mode === 'cat' ? "border-indigo-500 bg-indigo-50" : "border-slate-100 hover:border-purple-200"
               )}
               onClick={() => handleModeSelect('cat')}
@@ -211,13 +229,13 @@ function App() {
                 </span>
             </div>
             <div className="flex items-center justify-center w-full">
-              <label htmlFor="dropzone-file" className="flex flex-col items-center justify-center w-full h-64 border-2 border-slate-300 border-dashed rounded-xl cursor-pointer bg-white hover:bg-slate-50 transition-colors">
+              <label htmlFor="dropzone-file" className="flex flex-col items-center justify-center w-full h-64 border-2 border-slate-300 border-dashed rounded-xl cursor-pointer bg-white hover:bg-slate-50 focus-within:ring-2 focus-within:ring-indigo-500 focus-within:ring-offset-2 transition-colors">
                 <div className="flex flex-col items-center justify-center pt-5 pb-6">
                   <Upload className="w-12 h-12 mb-4 text-indigo-400" />
                   <p className="mb-2 text-lg text-slate-600"><span className="font-semibold">Click to upload</span> or drag and drop</p>
                   <p className="text-sm text-slate-400">Your selfie, their vision.</p>
                 </div>
-                <input id="dropzone-file" type="file" className="hidden" onChange={handleFileChange} accept="image/*" />
+                <input id="dropzone-file" type="file" className="sr-only" onChange={handleFileChange} accept="image/*" />
               </label>
             </div>
             <div className="text-center mt-8">
