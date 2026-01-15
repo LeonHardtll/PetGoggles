@@ -13,7 +13,25 @@ export const HeroComparison: React.FC<HeroComparisonProps> = ({ realitySrc, catR
   const [sliderPosition, setSliderPosition] = useState(50);
   const [activeMode, setActiveMode] = useState<'dog' | 'cat'>('dog');
   const [isHovering, setIsHovering] = useState(false);
+  const [isFocused, setIsFocused] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    // Stop auto-sweep when interacting via keyboard
+    if (e.key === 'ArrowLeft') {
+      setSliderPosition(prev => Math.max(0, prev - 5));
+      e.preventDefault();
+    } else if (e.key === 'ArrowRight') {
+      setSliderPosition(prev => Math.min(100, prev + 5));
+      e.preventDefault();
+    } else if (e.key === 'Home') {
+      setSliderPosition(0);
+      e.preventDefault();
+    } else if (e.key === 'End') {
+      setSliderPosition(100);
+      e.preventDefault();
+    }
+  };
 
   const handleMouseMove = useCallback((e: React.MouseEvent | React.TouchEvent) => {
     if (!containerRef.current) return;
@@ -46,9 +64,9 @@ export const HeroComparison: React.FC<HeroComparisonProps> = ({ realitySrc, catR
     return () => window.removeEventListener('resize', updateWidth);
   }, []);
 
-  // Auto-sweep animation when not hovering
+  // Auto-sweep animation when not hovering or focused
   useEffect(() => {
-    if (isHovering) return;
+    if (isHovering || isFocused) return;
     
     let direction = 1;
     const interval = setInterval(() => {
@@ -61,7 +79,7 @@ export const HeroComparison: React.FC<HeroComparisonProps> = ({ realitySrc, catR
     }, 50);
 
     return () => clearInterval(interval);
-  }, [isHovering]);
+  }, [isHovering, isFocused]);
 
   return (
     <div className="relative w-full max-w-[500px] mx-auto lg:mx-0 select-none group">
@@ -94,11 +112,22 @@ export const HeroComparison: React.FC<HeroComparisonProps> = ({ realitySrc, catR
       {/* Main Container */}
       <div 
         ref={containerRef}
-        className="relative w-full aspect-[3/4] rounded-3xl overflow-hidden shadow-2xl border-8 border-white bg-slate-100 cursor-col-resize"
+        className="relative w-full aspect-[3/4] rounded-3xl overflow-hidden shadow-2xl border-8 border-white bg-slate-100 cursor-col-resize focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-400 focus-visible:border-orange-400 transition-shadow"
         onMouseMove={handleMouseMove}
         onTouchMove={handleMouseMove}
         onMouseEnter={() => setIsHovering(true)}
         onMouseLeave={() => setIsHovering(false)}
+        onFocus={() => setIsFocused(true)}
+        onBlur={() => setIsFocused(false)}
+        onKeyDown={handleKeyDown}
+        tabIndex={0}
+        role="slider"
+        aria-label="Comparison slider"
+        aria-valuenow={Math.round(sliderPosition)}
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-orientation="horizontal"
+        aria-controls="comparison-image"
       >
         {/* Layer 1: Reality (Right side visible primarily) */}
         <img 
@@ -181,6 +210,7 @@ export const HeroComparison: React.FC<HeroComparisonProps> = ({ realitySrc, catR
             style={{ width: `${sliderPosition}%` }}
         >
              <img 
+                id="comparison-image"
                 src={activeMode === 'dog' ? dogSrc : catSrc} 
                 className={cn(
                     "h-full object-cover max-w-none",
