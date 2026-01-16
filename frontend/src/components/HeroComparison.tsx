@@ -63,6 +63,14 @@ export const HeroComparison: React.FC<HeroComparisonProps> = ({ realitySrc, catR
     return () => clearInterval(interval);
   }, [isHovering]);
 
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(e.key)) e.preventDefault();
+    if (e.key === 'ArrowLeft') setSliderPosition(p => Math.max(0, p - 5));
+    if (e.key === 'ArrowRight') setSliderPosition(p => Math.min(100, p + 5));
+    if (e.key === 'Home') setSliderPosition(0);
+    if (e.key === 'End') setSliderPosition(100);
+  };
+
   return (
     <div className="relative w-full max-w-[500px] mx-auto lg:mx-0 select-none group">
       {/* Floating Mode Toggle */}
@@ -199,8 +207,17 @@ export const HeroComparison: React.FC<HeroComparisonProps> = ({ realitySrc, catR
 
         {/* Slider Handle */}
         <div 
-            className="absolute top-0 bottom-0 w-1 bg-white cursor-col-resize z-20 shadow-[0_0_10px_rgba(0,0,0,0.3)]"
+            className="absolute top-0 bottom-0 w-1 bg-white cursor-col-resize z-20 shadow-[0_0_10px_rgba(0,0,0,0.3)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-indigo-500/50"
             style={{ left: `${sliderPosition}%` }}
+            tabIndex={0}
+            role="slider"
+            aria-label="Comparison slider"
+            aria-valuenow={Math.round(sliderPosition)}
+            aria-valuemin={0}
+            aria-valuemax={100}
+            onKeyDown={handleKeyDown}
+            onFocus={() => setIsHovering(true)}
+            onBlur={() => setIsHovering(false)}
         >
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-lg transform active:scale-95 transition-transform">
                 <ArrowLeftRight className="w-4 h-4 text-slate-400" />
