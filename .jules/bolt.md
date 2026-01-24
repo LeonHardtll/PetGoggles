@@ -1,0 +1,3 @@
+## 2024-05-22 - Direct DOM Manipulation for High-Frequency Animations
+**Learning:** React state updates (`useState`) are too expensive for 60fps animations or continuous gestures like sliders. They trigger full component re-renders on every frame (16ms), causing main thread blocking. Also discovered that "ghost" components (redundant, overlaid DOM nodes) can easily accumulate during development if not cleaned up, causing unnecessary overdraw.
+**Action:** For high-frequency interactions (sliders, drag, continuous animation), always use `useRef` to store mutable state and modify DOM properties (`style.width`, `style.left`) directly. Always inspect the DOM structure for redundant stacked layers when optimizing.
