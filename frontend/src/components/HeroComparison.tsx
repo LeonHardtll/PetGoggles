@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useLayoutEffect } from 'react';
 import { Dog, Cat, ArrowLeftRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -10,10 +10,28 @@ interface HeroComparisonProps {
 }
 
 export const HeroComparison: React.FC<HeroComparisonProps> = ({ realitySrc, catRealitySrc, dogSrc, catSrc }) => {
-  const [sliderPosition, setSliderPosition] = useState(50);
+  // Use a ref for slider position to avoid re-renders on every frame
+  const sliderPositionRef = useRef(50);
   const [activeMode, setActiveMode] = useState<'dog' | 'cat'>('dog');
   const [isHovering, setIsHovering] = useState(false);
+
   const containerRef = useRef<HTMLDivElement>(null);
+  const clippedRef = useRef<HTMLDivElement>(null);
+  const handleRef = useRef<HTMLDivElement>(null);
+
+  // Helper to update DOM directly
+  const updateSlider = useCallback((percentage: number) => {
+    sliderPositionRef.current = percentage;
+    if (clippedRef.current) {
+      clippedRef.current.style.width = `${percentage}%`;
+    }
+    if (handleRef.current) {
+      handleRef.current.style.left = `${percentage}%`;
+    }
+    if (containerRef.current) {
+      containerRef.current.setAttribute('aria-valuenow', Math.round(percentage).toString());
+    }
+  }, []);
 
   const handleMouseMove = useCallback((e: React.MouseEvent | React.TouchEvent) => {
     if (!containerRef.current) return;
@@ -29,8 +47,8 @@ export const HeroComparison: React.FC<HeroComparisonProps> = ({ realitySrc, catR
 
     const x = Math.max(0, Math.min(clientX - rect.left, rect.width));
     const percentage = (x / rect.width) * 100;
-    setSliderPosition(percentage);
-  }, []);
+    updateSlider(percentage);
+  }, [updateSlider]);
 
   const [containerWidth, setContainerWidth] = useState(0);
 
@@ -46,22 +64,54 @@ export const HeroComparison: React.FC<HeroComparisonProps> = ({ realitySrc, catR
     return () => window.removeEventListener('resize', updateWidth);
   }, []);
 
-  // Auto-sweep animation when not hovering
+  // Sync positions after every render to prevent React from resetting styles
+  useLayoutEffect(() => {
+    updateSlider(sliderPositionRef.current);
+  });
+
+  // Auto-sweep animation when not hovering using requestAnimationFrame
   useEffect(() => {
     if (isHovering) return;
     
+    let animationFrameId: number;
     let direction = 1;
-    const interval = setInterval(() => {
-      setSliderPosition(prev => {
-        const next = prev + (0.5 * direction);
-        if (next > 70) direction = -1;
-        if (next < 30) direction = 1;
-        return next;
-      });
-    }, 50);
+    let lastTime = performance.now();
 
-    return () => clearInterval(interval);
-  }, [isHovering]);
+    const animate = (time: number) => {
+      // Limit updates to ~60fps (or whatever the screen refresh rate is)
+      const delta = time - lastTime;
+
+      // We target roughly 0.5% shift every 50ms (original speed), so 0.01% per ms
+      // But 50ms interval with 0.5 increment = 10% per second.
+      // 60fps = 16.6ms per frame.
+      // 0.5 unit per 50ms -> 10 units per 1000ms.
+      // movement per ms = 0.5 / 50 = 0.01 units.
+
+      if (delta >= 16) { // Run at ~60fps
+        let current = sliderPositionRef.current;
+        const step = 0.01 * delta; // speed adjusted by time delta
+
+        let next = current + (step * direction);
+
+        if (next > 70) {
+          next = 70;
+          direction = -1;
+        } else if (next < 30) {
+          next = 30;
+          direction = 1;
+        }
+
+        updateSlider(next);
+        lastTime = time;
+      }
+
+      animationFrameId = requestAnimationFrame(animate);
+    };
+
+    animationFrameId = requestAnimationFrame(animate);
+
+    return () => cancelAnimationFrame(animationFrameId);
+  }, [isHovering, updateSlider]);
 
   return (
     <div className="relative w-full max-w-[500px] mx-auto lg:mx-0 select-none group">
@@ -99,6 +149,20 @@ export const HeroComparison: React.FC<HeroComparisonProps> = ({ realitySrc, catR
         onTouchMove={handleMouseMove}
         onMouseEnter={() => setIsHovering(true)}
         onMouseLeave={() => setIsHovering(false)}
+        // Added accessibility attributes for slider role
+        role="slider"
+        aria-valuenow={Math.round(sliderPositionRef.current)}
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-label="Comparison Slider"
+        tabIndex={0}
+        onKeyDown={(e) => {
+            if (e.key === 'ArrowLeft') {
+                updateSlider(Math.max(0, sliderPositionRef.current - 5));
+            } else if (e.key === 'ArrowRight') {
+                updateSlider(Math.min(100, sliderPositionRef.current + 5));
+            }
+        }}
       >
         {/* Layer 1: Reality (Right side visible primarily) */}
         <img 
@@ -110,75 +174,12 @@ export const HeroComparison: React.FC<HeroComparisonProps> = ({ realitySrc, catR
           HUMAN ({activeMode === 'dog' ? 'DOG OWNER' : 'CAT SERVANT'})
         </div>
 
-        {/* Layer 2: Pet Vision (Left side, clipped) */}
-        <div 
-          className="absolute inset-0 overflow-hidden"
-          style={{ width: `${sliderPosition}%` }}
-        >
-          <img 
-            src={activeMode === 'dog' ? dogSrc : catSrc} 
-            className={cn(
-                "absolute inset-0 w-full h-full max-w-none object-cover h-full", 
-                // Fix for aspect ratio matching - we need the image to be exactly the same size/position as the underlying one.
-                // Assuming all images are same aspect ratio. 
-                // Since we use max-w-none and container width, we need to ensure it matches the container's full width.
-                // Actually 'w-full' inside 'absolute inset-0' refers to the PARENT (the clipped div).
-                // We need the image to be the width of the GRANDPARENT (container).
-            )}
-            style={{ width: containerRef.current?.offsetWidth || '100%' }} // Dynamic fix or just 100% of container?
-            // Correction: The image inside the clipped div must be the full width of the CONTAINER, not the clipped div.
-            // So we use width: 100% of the viewport (container) width.
-            // But standard CSS 'w-full' is 100% of parent.
-            // We need to use vw or calc? No.
-            // We can just set the image width to the container width.
-            // Let's use a style prop for width if possible, or just standard "100%" and ensure parent is the container.
-            // Wait, if I put the image in a clipped div, and say w-full, it will be squished.
-            // Correct approach:
-          />
-        </div>
-        
-        {/* Re-implementing the Image logic to be safer without JS width calculation for the inner image */}
-        <div 
-            className="absolute top-0 left-0 h-full overflow-hidden border-r-4 border-white/80 shadow-[20px_0_50px_rgba(0,0,0,0.5)]"
-            style={{ width: `${sliderPosition}%` }}
-        >
-             <img 
-                src={activeMode === 'dog' ? dogSrc : catSrc} 
-                className="absolute top-0 left-0 max-w-none h-full object-cover"
-                style={{ 
-                    width: containerRef.current?.offsetWidth ? `${containerRef.current.offsetWidth}px` : '100%' 
-                }}
-                // Fallback: If ref is null (initial render), this might look weird. 
-                // Better approach: use 'vw' or fixed size? 
-                // Or just use a very wide width? 
-                // Actually, standard solution:
-                // Inner image width = 100% of container.
-                // Set width to the container's width.
-                // Let's rely on the JS width set above, or default to 100% and hope it matches.
-                // Actually, standard trick: 'w-[500px]' (max width of container) if we know it.
-                // Let's just use '100%' and a transformer? 
-                // No, simpler: 
-             />
-             {/* Better way:
-                The image should be: width: 100% (of container) height: 100%.
-                The parent div clips it. 
-                If parent div is 50%, image is 50%.
-                So image needs to be 200%? No.
-                The image inside the clipped div needs to be positioned absolutely and sized to the full container.
-             */}
-             <div className="w-full h-full relative">
-                 {/* This wrapper is the clipped window. */}
-                 {/* The image inside needs to be translated opposite to the clip? No. */}
-                 {/* Simplest: The image is just fixed size matching the container. */}
-                 {/* Let's try `width: '100vw'`? No. */}
-                 {/* Let's trust the `containerRef.current.offsetWidth` trick, but add a resize listener. */}
-             </div>
-        </div>
-        
-         {/* Retry Image structure for robustness */}
+         {/* Layer 2: Pet Vision (Left side, clipped) */}
          <div 
+            ref={clippedRef}
             className="absolute top-0 left-0 h-full overflow-hidden border-r-2 border-white/50 shadow-xl z-10"
-            style={{ width: `${sliderPosition}%` }}
+            // Initial style set via ref/effect, but we can set default here too
+            style={{ width: '50%' }}
         >
              <img 
                 src={activeMode === 'dog' ? dogSrc : catSrc} 
@@ -190,6 +191,7 @@ export const HeroComparison: React.FC<HeroComparisonProps> = ({ realitySrc, catR
                     // This is the critical part: ensure this image is exactly the same size as the container
                     width: containerWidth || '100%',
                 }}
+                alt="Pet Vision"
              />
              
              <div className="absolute top-4 left-4 bg-white/90 text-slate-800 text-xs font-bold px-2 py-1 rounded backdrop-blur-md shadow-sm">
@@ -199,8 +201,9 @@ export const HeroComparison: React.FC<HeroComparisonProps> = ({ realitySrc, catR
 
         {/* Slider Handle */}
         <div 
-            className="absolute top-0 bottom-0 w-1 bg-white cursor-col-resize z-20 shadow-[0_0_10px_rgba(0,0,0,0.3)]"
-            style={{ left: `${sliderPosition}%` }}
+            ref={handleRef}
+            className="absolute top-0 bottom-0 w-1 bg-white cursor-col-resize z-20 shadow-[0_0_10px_rgba(0,0,0,0.3)] pointer-events-none"
+            style={{ left: '50%' }}
         >
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-lg transform active:scale-95 transition-transform">
                 <ArrowLeftRight className="w-4 h-4 text-slate-400" />
