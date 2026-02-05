@@ -1,0 +1,3 @@
+## 2025-05-20 - High-Frequency Animation Optimization in React
+**Learning:** When moving React state to direct DOM manipulation for high-frequency animations (like 60fps sliders), you MUST use `useLayoutEffect` to re-apply the ref-based state (e.g., `element.style.left`) immediately after every React render. If you rely only on `requestAnimationFrame`, there will be a race condition where React's render (which resets the DOM to the JSX `style` prop) beats the next animation frame, causing the UI to visually "snap back" or glitch for one frame.
+**Action:** Always pair `requestAnimationFrame` loops with a `useLayoutEffect(() => updateDOM(ref.current))` hook when the animated element is also part of the React render tree.
